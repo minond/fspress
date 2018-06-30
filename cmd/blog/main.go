@@ -11,7 +11,7 @@ import (
 
 var (
 	cached   = flag.Bool("cached", true, "Read post content once")
-	postTmpl = flag.String("post-template", "default", "Path to post template file")
+	postTmpl = flag.String("post-template", "post.tmpl", "Path to post template file")
 	listen   = flag.String("listen", ":8081", "Host and port to listen on")
 	glob     = flag.String("glob", "[0-9]*.md", "Directories to check for post files")
 )
@@ -50,7 +50,7 @@ func newBlog() *fspress.Blog {
 		log.Fatalf("error finding post files: %v\n", err)
 	}
 
-	blog, err := fspress.NewBlog(*postTmpl, files)
+	blog, err := fspress.New(*postTmpl, files)
 	if err != nil {
 		log.Fatalf("error generating blog: %v\n", err)
 	}

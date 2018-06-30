@@ -18,11 +18,11 @@ type Blog struct {
 
 type post struct {
 	path    string
-	content []byte
+	Content string
 	tmpl    *template.Template
 }
 
-func NewBlog(postTmpl string, files []string) (*Blog, error) {
+func New(postTmpl string, files []string) (*Blog, error) {
 	tmpl := template.Must(template.ParseFiles(postTmpl))
 	blog := &Blog{posts: make(map[string]*post)}
 
@@ -57,19 +57,13 @@ func (p *post) Load() error {
 		return err
 	}
 
-	p.content = blackfriday.Run(bytes)
+	p.Content = string(blackfriday.Run(bytes))
 	return nil
 }
 
 func (p *post) String() string {
 	buf := &bytes.Buffer{}
-
-	p.tmpl.Execute(buf, struct {
-		Content string
-	}{
-		Content: string(p.content),
-	})
-
+	p.tmpl.Execute(buf, p)
 	return buf.String()
 }
 
