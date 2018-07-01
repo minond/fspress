@@ -1,2 +1,28 @@
 fspress is a little program that helps you develop and compile a blog from
 markdown files in your file system.
+
+
+Installation and basic usage:
+  $ go get github.com/minond/fspress    # installs fspress and fspressc
+  $ fspress                             # start the server with default settings
+  $ fspressc                            # geneate files using default settings
+
+
+Usage of fspress:
+  -dev
+        run blog in development mode
+  -glob string
+        directories to check for post files (default "[0-9]*.md")
+  -listen string
+        host and port to listen on (default ":8081")
+  -post-template string
+        path to post template file (default "post.tmpl")
+
+
+Usage of fspressc:
+  -glob string
+        directories to check for post files (default "[0-9]*.md")
+  -out string
+        output directory (default ".")
+  -post-template string
+        path to post template file (default "post.tmpl")
