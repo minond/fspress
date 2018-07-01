@@ -9,20 +9,29 @@ import (
 	"github.com/minond/fspress"
 )
 
-const reloader = "<script>setTimeout(() => location.reload(), 1000)</script>"
+const (
+	reloader = "<script>setTimeout(() => location.reload(), 1000)</script>"
+)
 
 var (
+	blog *fspress.Blog
+
 	dev      = flag.Bool("dev", false, "Run blog in development mode")
 	postTmpl = flag.String("post-template", "post.tmpl", "Path to post template file")
 	listen   = flag.String("listen", ":8081", "Host and port to listen on")
 	glob     = flag.String("glob", "[0-9]*.md", "Directories to check for post files")
 )
 
-func main() {
+func init() {
 	flag.Parse()
+	blog = fspress.Must(fspress.ParseGlob(*postTmpl, *glob))
+}
 
-	blog := newBlog()
+func main() {
+	server()
+}
 
+func server() {
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		log.Printf("got request to %s", r.URL.Path)
 
@@ -33,7 +42,7 @@ func main() {
 
 		if *dev {
 			log.Println("reloading blog")
-			blog = newBlog()
+			blog = fspress.Must(fspress.ParseGlob(*postTmpl, *glob))
 		}
 
 		if post := blog.Get(r.URL.Path); post != nil {
@@ -47,23 +56,4 @@ func main() {
 
 	log.Printf("starting server on %s\n", *listen)
 	log.Fatal(http.ListenAndServe(*listen, nil))
-}
-
-func newBlog() *fspress.Blog {
-	log.Printf("building blog from %s\n", *glob)
-	files, err := fspress.FindPostFiles(*glob)
-	if err != nil {
-		log.Fatalf("error finding post files: %v\n", err)
-	}
-
-	blog, err := fspress.New(*postTmpl, files)
-	if err != nil {
-		log.Fatalf("error generating blog: %v\n", err)
-	}
-
-	for _, path := range blog.Paths() {
-		log.Printf("serving %s on /%s\n", path, fspress.CleanURL(path))
-	}
-
-	return blog
 }

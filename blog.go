@@ -21,12 +21,20 @@ type post struct {
 	tmpl    *template.Template
 }
 
-func New(postTmpl string, files []string) (*Blog, error) {
+func Must(blog *Blog, err error) *Blog {
+	if err != nil {
+		panic(err)
+	}
+
+	return blog
+}
+
+func ParseFiles(postTmpl string, files []string) (*Blog, error) {
 	tmpl := template.Must(template.ParseFiles(postTmpl))
 	blog := &Blog{posts: make(map[string]*post)}
 
 	for _, file := range files {
-		name := CleanURL(file)
+		name := cleanURL(file)
 		post := &post{Path: file, tmpl: tmpl}
 
 		if err := post.Load(); err != nil {
@@ -34,6 +42,20 @@ func New(postTmpl string, files []string) (*Blog, error) {
 		}
 
 		blog.posts[name] = post
+	}
+
+	return blog, nil
+}
+
+func ParseGlob(postTmpl string, glob string) (*Blog, error) {
+	files, err := findPostFiles(glob)
+	if err != nil {
+		return nil, err
+	}
+
+	blog, err := ParseFiles(postTmpl, files)
+	if err != nil {
+		return nil, err
 	}
 
 	return blog, nil
@@ -47,7 +69,7 @@ func (b *Blog) Paths() (paths []string) {
 }
 
 func (b *Blog) Get(file string) *post {
-	return b.posts[CleanURL(file)]
+	return b.posts[cleanURL(file)]
 }
 
 func (p *post) Load() error {
@@ -66,13 +88,13 @@ func (p *post) String() string {
 	return buf.String()
 }
 
-func CleanURL(name string) string {
+func cleanURL(name string) string {
 	re := regexp.MustCompile("^[0-9]{10}-")
 	base := strings.TrimLeft(
 		strings.TrimRight(strings.TrimRight(name, ".html"), ".md"), "/")
 	return re.ReplaceAllString(base, "")
 }
 
-func FindPostFiles(glob string) ([]string, error) {
+func findPostFiles(glob string) ([]string, error) {
 	return filepath.Glob(glob)
 }
