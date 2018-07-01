@@ -16,7 +16,7 @@ type Blog struct {
 }
 
 type post struct {
-	path    string
+	Path    string
 	Content string
 	tmpl    *template.Template
 }
@@ -27,7 +27,7 @@ func New(postTmpl string, files []string) (*Blog, error) {
 
 	for _, file := range files {
 		name := CleanURL(file)
-		post := &post{path: file, tmpl: tmpl}
+		post := &post{Path: file, tmpl: tmpl}
 
 		if err := post.Load(); err != nil {
 			return nil, err
@@ -41,7 +41,7 @@ func New(postTmpl string, files []string) (*Blog, error) {
 
 func (b *Blog) Paths() (paths []string) {
 	for _, post := range b.posts {
-		paths = append(paths, post.path)
+		paths = append(paths, post.Path)
 	}
 	return
 }
@@ -51,7 +51,7 @@ func (b *Blog) Get(file string) *post {
 }
 
 func (p *post) Load() error {
-	bytes, err := ioutil.ReadFile(p.path)
+	bytes, err := ioutil.ReadFile(p.Path)
 	if err != nil {
 		return err
 	}
