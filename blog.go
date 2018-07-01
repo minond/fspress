@@ -48,24 +48,12 @@ func ParseFiles(postTmpl string, files []string) (*Blog, error) {
 }
 
 func ParseGlob(postTmpl string, glob string) (*Blog, error) {
-	files, err := findPostFiles(glob)
+	files, err := filepath.Glob(glob)
 	if err != nil {
 		return nil, err
 	}
 
-	blog, err := ParseFiles(postTmpl, files)
-	if err != nil {
-		return nil, err
-	}
-
-	return blog, nil
-}
-
-func (b *Blog) Paths() (paths []string) {
-	for _, post := range b.posts {
-		paths = append(paths, post.Path)
-	}
-	return
+	return ParseFiles(postTmpl, files)
 }
 
 func (b *Blog) Get(file string) *post {
@@ -89,12 +77,8 @@ func (p *post) String() string {
 }
 
 func cleanURL(name string) string {
-	re := regexp.MustCompile("^[0-9]{10}-")
+	re := regexp.MustCompile("^[0-9]+-")
 	base := strings.TrimLeft(
 		strings.TrimRight(strings.TrimRight(name, ".html"), ".md"), "/")
 	return re.ReplaceAllString(base, "")
-}
-
-func findPostFiles(glob string) ([]string, error) {
-	return filepath.Glob(glob)
 }
