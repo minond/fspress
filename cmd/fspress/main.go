@@ -3,7 +3,6 @@ package main
 import (
 	"flag"
 	"fmt"
-	"io/ioutil"
 	"log"
 	"net/http"
 
@@ -18,7 +17,6 @@ var (
 	blog *fspress.Blog
 
 	dev      = flag.Bool("dev", false, "Run blog in development mode")
-	out      = flag.String("out", "", "Output directory")
 	postTmpl = flag.String("post-template", "post.tmpl", "Path to post template file")
 	listen   = flag.String("listen", ":8081", "Host and port to listen on")
 	glob     = flag.String("glob", "[0-9]*.md", "Directories to check for post files")
@@ -30,20 +28,6 @@ func init() {
 }
 
 func main() {
-	if *out != "" {
-		log.Print("compiling posts")
-		for _, post := range blog.Posts() {
-			log.Printf("saved %s to %s/%s.html", post.Path, *out, post.URL)
-			ioutil.WriteFile(*out+"/"+post.URL+".html", []byte(post.Content), 0644)
-		}
-		log.Print("done")
-	} else {
-		log.Print("starting server")
-		server()
-	}
-}
-
-func server() {
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		log.Printf("got request to %s", r.URL.Path)
 
