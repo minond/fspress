@@ -35,9 +35,9 @@ func ParseFiles(postTmpl string, files []string) (*Blog, error) {
 	blog := &Blog{posts: make(map[string]*post)}
 
 	for _, file := range files {
-		name := cleanURL(file)
+		url := cleanURL(filepath.Base(file))
 		post := &post{
-			URL:  cleanURL(file),
+			URL:  url,
 			Path: file,
 			tmpl: tmpl,
 		}
@@ -46,7 +46,7 @@ func ParseFiles(postTmpl string, files []string) (*Blog, error) {
 			return nil, err
 		}
 
-		blog.posts[name] = post
+		blog.posts[url] = post
 	}
 
 	return blog, nil
