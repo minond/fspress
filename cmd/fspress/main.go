@@ -16,10 +16,10 @@ const (
 var (
 	blog *fspress.Blog
 
-	dev      = flag.Bool("dev", false, "Run blog in development mode")
-	postTmpl = flag.String("post-template", "post.tmpl", "Path to post template file")
-	listen   = flag.String("listen", ":8081", "Host and port to listen on")
-	glob     = flag.String("glob", "[0-9]*.md", "Directories to check for post files")
+	dev      = flag.Bool("dev", false, "run blog in development mode")
+	postTmpl = flag.String("post-template", "post.tmpl", "path to post template file")
+	listen   = flag.String("listen", ":8081", "host and port to listen on")
+	glob     = flag.String("glob", "[0-9]*.md", "directories to check for post files")
 )
 
 func init() {

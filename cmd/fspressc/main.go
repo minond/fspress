@@ -11,9 +11,9 @@ import (
 var (
 	blog *fspress.Blog
 
-	out      = flag.String("out", ".", "Output directory")
-	postTmpl = flag.String("post-template", "post.tmpl", "Path to post template file")
-	glob     = flag.String("glob", "[0-9]*.md", "Directories to check for post files")
+	out      = flag.String("out", ".", "output directory")
+	postTmpl = flag.String("post-template", "post.tmpl", "path to post template file")
+	glob     = flag.String("glob", "[0-9]*.md", "directories to check for post files")
 )
 
 func init() {
