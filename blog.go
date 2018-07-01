@@ -16,6 +16,7 @@ type Blog struct {
 }
 
 type post struct {
+	URL     string
 	Path    string
 	Content string
 	tmpl    *template.Template
@@ -35,7 +36,11 @@ func ParseFiles(postTmpl string, files []string) (*Blog, error) {
 
 	for _, file := range files {
 		name := cleanURL(file)
-		post := &post{Path: file, tmpl: tmpl}
+		post := &post{
+			URL:  cleanURL(file),
+			Path: file,
+			tmpl: tmpl,
+		}
 
 		if err := post.Load(); err != nil {
 			return nil, err
@@ -54,6 +59,13 @@ func ParseGlob(postTmpl string, glob string) (*Blog, error) {
 	}
 
 	return ParseFiles(postTmpl, files)
+}
+
+func (b *Blog) Posts() (posts []*post) {
+	for _, post := range b.posts {
+		posts = append(posts, post)
+	}
+	return
 }
 
 func (b *Blog) Get(file string) *post {
