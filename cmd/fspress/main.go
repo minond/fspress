@@ -9,8 +9,10 @@ import (
 	"github.com/minond/fspress"
 )
 
+const reloader = "<script>setTimeout(() => location.reload(), 1000)</script>"
+
 var (
-	cached   = flag.Bool("cached", true, "Read post content once")
+	dev      = flag.Bool("dev", false, "Run blog in development mode")
 	postTmpl = flag.String("post-template", "post.tmpl", "Path to post template file")
 	listen   = flag.String("listen", ":8081", "Host and port to listen on")
 	glob     = flag.String("glob", "[0-9]*.md", "Directories to check for post files")
@@ -29,13 +31,17 @@ func main() {
 			return
 		}
 
-		if !*cached {
+		if *dev {
 			log.Println("reloading blog")
 			blog = newBlog()
 		}
 
 		if post := blog.Get(r.URL.Path); post != nil {
 			fmt.Fprint(w, post.String())
+		}
+
+		if *dev {
+			fmt.Fprint(w, reloader)
 		}
 	})
 
