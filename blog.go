@@ -12,8 +12,7 @@ import (
 )
 
 type Blog struct {
-	posts    map[string]*post
-	postTmpl *template.Template
+	posts map[string]*post
 }
 
 type post struct {
