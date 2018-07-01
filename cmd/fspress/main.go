@@ -18,7 +18,7 @@ var (
 	blog *fspress.Blog
 
 	dev      = flag.Bool("dev", false, "Run blog in development mode")
-	gen      = flag.Bool("gen", false, "Generate and save HTML files")
+	out      = flag.String("out", "", "Output directory")
 	postTmpl = flag.String("post-template", "post.tmpl", "Path to post template file")
 	listen   = flag.String("listen", ":8081", "Host and port to listen on")
 	glob     = flag.String("glob", "[0-9]*.md", "Directories to check for post files")
@@ -30,11 +30,11 @@ func init() {
 }
 
 func main() {
-	if *gen {
+	if *out != "" {
 		log.Print("compiling posts")
 		for _, post := range blog.Posts() {
-			log.Printf("saved %s to %s.html", post.Path, post.URL)
-			ioutil.WriteFile(post.URL+".html", []byte(post.Content), 0644)
+			log.Printf("saved %s to %s/%s.html", post.Path, *out, post.URL)
+			ioutil.WriteFile(*out+"/"+post.URL+".html", []byte(post.Content), 0644)
 		}
 		log.Print("done")
 	} else {
