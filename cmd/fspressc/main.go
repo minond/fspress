@@ -25,7 +25,7 @@ func main() {
 	log.Print("compiling posts")
 	for _, post := range blog.Posts() {
 		log.Printf("saved %s to %s/%s.html", post.Path, *out, post.URL)
-		ioutil.WriteFile(*out+"/"+post.URL+".html", []byte(post.Content), 0644)
+		ioutil.WriteFile(*out+"/"+post.URL+".html", []byte(post.String()), 0644)
 	}
 	log.Print("done")
 }
