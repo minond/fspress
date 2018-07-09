@@ -9,6 +9,8 @@ Installation and basic usage:
 
 
 Usage of fspress:
+  -autoreload
+        auto reload posts on an interval. requires dev mode
   -dev
         run blog in development mode
   -glob string
