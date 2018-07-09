@@ -16,10 +16,11 @@ const (
 var (
 	blog *fspress.Blog
 
-	dev      = flag.Bool("dev", false, "run blog in development mode")
-	postTmpl = flag.String("post-template", "post.tmpl", "path to post template file")
-	listen   = flag.String("listen", ":8081", "host and port to listen on")
-	glob     = flag.String("glob", "[0-9]*.md", "directories to check for post files")
+	dev        = flag.Bool("dev", false, "run blog in development mode")
+	autoreload = flag.Bool("autoreload", false, "auto reload posts on an interval. requires dev mode")
+	postTmpl   = flag.String("post-template", "post.tmpl", "path to post template file")
+	listen     = flag.String("listen", ":8081", "host and port to listen on")
+	glob       = flag.String("glob", "[0-9]*.md", "directories to check for post files")
 )
 
 func init() {
@@ -45,7 +46,7 @@ func main() {
 			fmt.Fprint(w, post.String())
 		}
 
-		if *dev {
+		if *dev && *autoreload {
 			fmt.Fprint(w, reloader)
 		}
 	})
