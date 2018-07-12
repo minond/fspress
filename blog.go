@@ -15,10 +15,11 @@ import (
 
 // Blog holds all information about this blog and its posts in memory.
 type Blog struct {
-	posts map[string]*post
+	Posts map[string]*Post
 }
 
-type post struct {
+// Post hold information about a blog post
+type Post struct {
 	URL     string
 	Path    string
 	Content string
@@ -37,11 +38,11 @@ func Must(blog *Blog, err error) *Blog {
 // ParseFiles generates a Blog using the provided array of file paths
 func ParseFiles(postTmpl string, files []string) (*Blog, error) {
 	tmpl := template.Must(template.ParseFiles(postTmpl))
-	blog := &Blog{posts: make(map[string]*post)}
+	blog := &Blog{Posts: make(map[string]*Post)}
 
 	for _, file := range files {
 		url := cleanURL(filepath.Base(file))
-		post := &post{
+		post := &Post{
 			URL:  url,
 			Path: file,
 			tmpl: tmpl,
@@ -51,7 +52,7 @@ func ParseFiles(postTmpl string, files []string) (*Blog, error) {
 			return nil, err
 		}
 
-		blog.posts[url] = post
+		blog.Posts[url] = post
 	}
 
 	return blog, nil
@@ -67,21 +68,13 @@ func ParseGlob(postTmpl string, glob string) (*Blog, error) {
 	return ParseFiles(postTmpl, files)
 }
 
-// Posts returns an unsorted slice of all posts that are a part of the blog.
-func (b *Blog) Posts() (posts []*post) {
-	for _, post := range b.posts {
-		posts = append(posts, post)
-	}
-	return
-}
-
 // Get looks up a post by cleaning up the provided URL string
-func (b *Blog) Get(file string) *post {
-	return b.posts[cleanURL(file)]
+func (b *Blog) Get(file string) *Post {
+	return b.Posts[cleanURL(file)]
 }
 
 // Load reads a post's contents from the file system
-func (p *post) Load() error {
+func (p *Post) Load() error {
 	bytes, err := ioutil.ReadFile(p.Path)
 	if err != nil {
 		return err
@@ -92,7 +85,7 @@ func (p *post) Load() error {
 }
 
 // String returns a fully generated blog post
-func (p *post) String() string {
+func (p *Post) String() string {
 	buf := &bytes.Buffer{}
 	p.tmpl.Execute(buf, p)
 	return buf.String()

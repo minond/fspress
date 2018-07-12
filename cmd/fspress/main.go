@@ -3,6 +3,7 @@ package main
 import (
 	"flag"
 	"fmt"
+	"html/template"
 	"log"
 	"net/http"
 
@@ -10,11 +11,13 @@ import (
 )
 
 const (
-	reloader = "<script>setTimeout(() => location.reload(), 1000)</script>"
+	reloader  = `<script>setTimeout(() => location.reload(), 1000)</script>`
+	indexhtml = `<ul>{{range .Posts}}<li><a href="/{{.URL}}">{{.URL}}</a></li>{{end}}</ul>`
 )
 
 var (
-	blog *fspress.Blog
+	blog  *fspress.Blog
+	index = template.Must(template.New("index").Parse(indexhtml))
 
 	dev        = flag.Bool("dev", false, "run blog in development mode")
 	autoreload = flag.Bool("autoreload", false, "auto reload posts on an interval. requires dev mode")
@@ -34,6 +37,12 @@ func main() {
 
 		if r.Method != http.MethodGet {
 			log.Printf("ignoring %s %s request", r.Method, r.URL.Path)
+			return
+		}
+
+		if *dev && r.URL.Path == "/" {
+			w.Header().Add("Content-Type", "text/html")
+			index.Execute(w, blog)
 			return
 		}
 

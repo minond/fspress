@@ -34,14 +34,13 @@ func TestMustReturns(t *testing.T) {
 
 func TestStringifyingPosts(t *testing.T) {
 	tmpl := template.Must(template.New("").Parse("-{{.Content}}-"))
-	post := &post{Content: "hi", tmpl: tmpl}
+	post := &Post{Content: "hi", tmpl: tmpl}
 	eq(t, "-hi-", post.String())
 }
 
 func TestParseGlobFindsAllFiles(t *testing.T) {
 	blog := Must(ParseGlob("test/template.tmpl", "test/[0-9]*.md"))
-	posts := blog.Posts()
-	eq(t, 3, len(posts))
+	eq(t, 3, len(blog.Posts))
 }
 
 func TestGetUsesCleanURLs(t *testing.T) {
@@ -55,7 +54,7 @@ func TestGetUsesCleanURLs(t *testing.T) {
 		t.Fatal("not expecting nil")
 	}
 
-	eq(t, 3, len(blog.Posts()))
+	eq(t, 3, len(blog.Posts))
 	eq(t, post1, post2)
 	eq(t, post2, post3)
 }
