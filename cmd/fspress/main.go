@@ -32,6 +32,13 @@ func init() {
 }
 
 func main() {
+	extra := ""
+	static := http.FileServer(http.Dir("."))
+
+	if *dev && *autoreload {
+		extra += reloader
+	}
+
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		log.Printf("got request to %s", r.URL.Path)
 
@@ -52,11 +59,9 @@ func main() {
 		}
 
 		if post := blog.Get(r.URL.Path); post != nil {
-			fmt.Fprint(w, post.String())
-		}
-
-		if *dev && *autoreload {
-			fmt.Fprint(w, reloader)
+			fmt.Fprint(w, post.String()+extra)
+		} else {
+			static.ServeHTTP(w, r)
 		}
 	})
 
