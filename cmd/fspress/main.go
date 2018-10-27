@@ -6,6 +6,7 @@ import (
 	"html/template"
 	"log"
 	"net/http"
+	"os"
 
 	"github.com/minond/fspress"
 )
@@ -31,6 +32,11 @@ func init() {
 	blog = fspress.Must(fspress.ParseGlob(*postTmpl, *glob))
 }
 
+func fileExists(file string) bool {
+	_, err := os.Stat(file)
+	return !os.IsNotExist(err)
+}
+
 func main() {
 	extra := ""
 	static := http.FileServer(http.Dir("."))
@@ -44,6 +50,16 @@ func main() {
 
 		if r.Method != http.MethodGet {
 			log.Printf("ignoring %s %s request", r.Method, r.URL.Path)
+			return
+		}
+
+		path := r.URL.Path
+		if r.URL.Path == "/" {
+			path = "index.html"
+		}
+
+		if fileExists(path) {
+			static.ServeHTTP(w, r)
 			return
 		}
 
