@@ -4,8 +4,11 @@ package fspress
 
 import (
 	"bytes"
+	"encoding/csv"
 	"errors"
+	"fmt"
 	"io/ioutil"
+	"os"
 	"path/filepath"
 	"regexp"
 	"strconv"
@@ -18,11 +21,16 @@ import (
 
 var fileNameDateRe = regexp.MustCompile("([0-9]+)-")
 
+type Metadata struct {
+	Title string
+}
+
 // Blog holds all information about this blog and its posts in memory.
 type Blog struct {
 	catalogPath  string
 	postTmplPath string
 	filesGlob    string
+	Catalog      map[string]*Metadata
 	Posts        map[string]*Post
 }
 
@@ -31,11 +39,43 @@ func New(catalogPath, postTmplPath string, filesGlob string) *Blog {
 		catalogPath:  catalogPath,
 		postTmplPath: postTmplPath,
 		filesGlob:    filesGlob,
-		Posts:        make(map[string]*Post),
 	}
 }
 
 func (blog *Blog) Load() error {
+	if err := blog.loadCatalog(); err != nil {
+		return err
+	}
+	return blog.loadPosts()
+}
+
+func (blog *Blog) loadCatalog() error {
+	catalog := make(map[string]*Metadata)
+
+	handle, err := os.Open(blog.catalogPath)
+	if err != nil {
+		return err
+	}
+
+	reader := csv.NewReader(handle)
+	records, err := reader.ReadAll()
+	if err != nil {
+		return err
+	}
+
+	for _, entry := range records[1:] {
+		catalog[entry[0]] = &Metadata{
+			Title: entry[1],
+		}
+	}
+
+	blog.Catalog = catalog
+	return nil
+}
+
+func (blog *Blog) loadPosts() error {
+	posts := make(map[string]*Post)
+
 	files, err := filepath.Glob(blog.filesGlob)
 	if err != nil {
 		return err
@@ -52,14 +92,21 @@ func (blog *Blog) Load() error {
 		if err != nil {
 			return err
 		}
-		blog.Posts[url] = post
+		posts[url] = post
 	}
 
+	blog.Posts = posts
 	return nil
 }
 
-func (b *Blog) generatePost(file string, tmpl *template.Template) (*Post, error) {
+func (blog *Blog) generatePost(file string, tmpl *template.Template) (*Post, error) {
 	url := cleanURL(filepath.Base(file))
+
+	metadata, ok := blog.Catalog[url]
+	if !ok {
+		return nil, fmt.Errorf("%s (%s) is not in the catalog (%s)",
+			file, url, blog.catalogPath)
+	}
 
 	dateStr, err := fileNameDate(file)
 	if err != nil {
@@ -72,10 +119,11 @@ func (b *Blog) generatePost(file string, tmpl *template.Template) (*Post, error)
 	date := time.Unix(i, 0)
 
 	post := &Post{
-		URL:  url,
-		Path: file,
-		Date: date,
-		tmpl: tmpl,
+		URL:   url,
+		Path:  file,
+		Date:  date,
+		Title: metadata.Title,
+		tmpl:  tmpl,
 	}
 
 	if err := post.Load(); err != nil {
@@ -86,8 +134,8 @@ func (b *Blog) generatePost(file string, tmpl *template.Template) (*Post, error)
 }
 
 // Get looks up a post by cleaning up the provided URL string
-func (b *Blog) Get(file string) *Post {
-	return b.Posts[cleanURL(file)]
+func (blog *Blog) Get(file string) *Post {
+	return blog.Posts[cleanURL(file)]
 }
 
 // Post hold information about a blog post
