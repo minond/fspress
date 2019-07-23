@@ -10,7 +10,7 @@ import (
 	"strings"
 	"text/template"
 
-	blackfriday "gopkg.in/russross/blackfriday.v2"
+	blackfriday "github.com/russross/blackfriday/v2"
 )
 
 // Blog holds all information about this blog and its posts in memory.
