@@ -20,16 +20,20 @@ var (
 	blog  *fspress.Blog
 	index = template.Must(template.New("index").Parse(indexhtml))
 
-	dev        = flag.Bool("dev", false, "run blog in development mode")
 	autoreload = flag.Bool("autoreload", false, "auto reload posts on an interval. requires dev mode")
-	postTmpl   = flag.String("post-template", "post.tmpl", "path to post template file")
-	listen     = flag.String("listen", ":8081", "host and port to listen on")
+	catalog    = flag.String("catalog", "catalog.csv", "path to catalog csv file")
+	dev        = flag.Bool("dev", false, "run blog in development mode")
 	glob       = flag.String("glob", "[0-9]*.md", "directories to check for post files")
+	listen     = flag.String("listen", ":8081", "host and port to listen on")
+	postTmpl   = flag.String("post-template", "post.tmpl", "path to post template file")
 )
 
 func init() {
 	flag.Parse()
-	blog = fspress.Must(fspress.ParseGlob(*postTmpl, *glob))
+	blog = fspress.New(*catalog, *postTmpl, *glob)
+	if err := blog.Load(); err != nil {
+		panic(err)
+	}
 }
 
 func fileExists(file string) bool {
@@ -71,7 +75,9 @@ func main() {
 
 		if *dev {
 			log.Println("reloading blog")
-			blog = fspress.Must(fspress.ParseGlob(*postTmpl, *glob))
+			if err := blog.Load(); err != nil {
+				panic(err)
+			}
 		}
 
 		if post := blog.Get(r.URL.Path); post != nil {

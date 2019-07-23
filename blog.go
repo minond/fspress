@@ -21,48 +21,47 @@ var fileNameSlugRe = regexp.MustCompile("[0-9]+-(.+)\\.")
 
 // Blog holds all information about this blog and its posts in memory.
 type Blog struct {
-	Posts map[string]*Post
+	catalogPath  string
+	postTmplPath string
+	filesGlob    string
+	Posts        map[string]*Post
 }
 
-// Post hold information about a blog post
-type Post struct {
-	URL     string
-	Path    string
-	Slug    string
-	Content string
-	Date    time.Time
-	tmpl    *template.Template
+func New(catalogPath, postTmplPath string, filesGlob string) *Blog {
+	return &Blog{
+		catalogPath:  catalogPath,
+		postTmplPath: postTmplPath,
+		filesGlob:    filesGlob,
+		Posts:        make(map[string]*Post),
+	}
 }
 
-// Must asserts a Blog creation was successful and panics when it is not.
-func Must(blog *Blog, err error) *Blog {
+func (blog *Blog) Load() error {
+	files, err := filepath.Glob(blog.filesGlob)
 	if err != nil {
-		panic(err)
+		return err
 	}
 
-	return blog
-}
-
-// ParseFiles generates a Blog using the provided array of file paths
-func ParseFiles(postTmpl string, files []string) (*Blog, error) {
-	tmpl := template.Must(template.ParseFiles(postTmpl))
-	blog := &Blog{Posts: make(map[string]*Post)}
+	tmpl, err := template.ParseFiles(blog.postTmplPath)
+	if err != nil {
+		return err
+	}
 
 	for _, file := range files {
 		url := cleanURL(filepath.Base(file))
 
 		slug, err := fileNameSlug(file)
 		if err != nil {
-			return nil, err
+			return err
 		}
 
 		dateStr, err := fileNameDate(file)
 		if err != nil {
-			return nil, err
+			return err
 		}
 		i, err := strconv.ParseInt(dateStr, 10, 64)
 		if err != nil {
-			return nil, err
+			return err
 		}
 		date := time.Unix(i, 0)
 
@@ -75,28 +74,29 @@ func ParseFiles(postTmpl string, files []string) (*Blog, error) {
 		}
 
 		if err := post.Load(); err != nil {
-			return nil, err
+			return err
 		}
 
 		blog.Posts[url] = post
 	}
 
-	return blog, nil
-}
-
-// ParseGlob generates a Blog using the provided glob string
-func ParseGlob(postTmpl string, glob string) (*Blog, error) {
-	files, err := filepath.Glob(glob)
-	if err != nil {
-		return nil, err
-	}
-
-	return ParseFiles(postTmpl, files)
+	return nil
 }
 
 // Get looks up a post by cleaning up the provided URL string
 func (b *Blog) Get(file string) *Post {
 	return b.Posts[cleanURL(file)]
+}
+
+// Post hold information about a blog post
+type Post struct {
+	URL     string
+	Path    string
+	Slug    string
+	Title   string
+	Content string
+	Date    time.Time
+	tmpl    *template.Template
 }
 
 // Load reads a post's contents from the file system
