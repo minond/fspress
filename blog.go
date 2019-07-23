@@ -17,7 +17,6 @@ import (
 )
 
 var fileNameDateRe = regexp.MustCompile("([0-9]+)-")
-var fileNameSlugRe = regexp.MustCompile("[0-9]+-(.+)\\.")
 
 // Blog holds all information about this blog and its posts in memory.
 type Blog struct {
@@ -49,38 +48,41 @@ func (blog *Blog) Load() error {
 
 	for _, file := range files {
 		url := cleanURL(filepath.Base(file))
-
-		slug, err := fileNameSlug(file)
+		post, err := blog.generatePost(file, tmpl)
 		if err != nil {
 			return err
 		}
-
-		dateStr, err := fileNameDate(file)
-		if err != nil {
-			return err
-		}
-		i, err := strconv.ParseInt(dateStr, 10, 64)
-		if err != nil {
-			return err
-		}
-		date := time.Unix(i, 0)
-
-		post := &Post{
-			URL:  url,
-			Path: file,
-			Slug: slug,
-			Date: date,
-			tmpl: tmpl,
-		}
-
-		if err := post.Load(); err != nil {
-			return err
-		}
-
 		blog.Posts[url] = post
 	}
 
 	return nil
+}
+
+func (b *Blog) generatePost(file string, tmpl *template.Template) (*Post, error) {
+	url := cleanURL(filepath.Base(file))
+
+	dateStr, err := fileNameDate(file)
+	if err != nil {
+		return nil, err
+	}
+	i, err := strconv.ParseInt(dateStr, 10, 64)
+	if err != nil {
+		return nil, err
+	}
+	date := time.Unix(i, 0)
+
+	post := &Post{
+		URL:  url,
+		Path: file,
+		Date: date,
+		tmpl: tmpl,
+	}
+
+	if err := post.Load(); err != nil {
+		return nil, err
+	}
+
+	return post, nil
 }
 
 // Get looks up a post by cleaning up the provided URL string
@@ -92,7 +94,6 @@ func (b *Blog) Get(file string) *Post {
 type Post struct {
 	URL     string
 	Path    string
-	Slug    string
 	Title   string
 	Content string
 	Date    time.Time
@@ -115,14 +116,6 @@ func (p *Post) String() string {
 	buf := &bytes.Buffer{}
 	p.tmpl.Execute(buf, p)
 	return buf.String()
-}
-
-func fileNameSlug(name string) (string, error) {
-	match := fileNameSlugRe.FindStringSubmatch(name)
-	if len(match) != 2 {
-		return "", errors.New("invalid slug in file name")
-	}
-	return match[1], nil
 }
 
 func fileNameDate(name string) (string, error) {
