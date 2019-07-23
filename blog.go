@@ -4,14 +4,19 @@ package fspress
 
 import (
 	"bytes"
+	"errors"
 	"io/ioutil"
 	"path/filepath"
 	"regexp"
+	"strconv"
 	"strings"
 	"text/template"
+	"time"
 
 	blackfriday "github.com/russross/blackfriday/v2"
 )
+
+var datePrefixRe = regexp.MustCompile("([0-9]+)-")
 
 // Blog holds all information about this blog and its posts in memory.
 type Blog struct {
@@ -23,6 +28,7 @@ type Post struct {
 	URL     string
 	Path    string
 	Content string
+	Date    time.Time
 	tmpl    *template.Template
 }
 
@@ -42,9 +48,20 @@ func ParseFiles(postTmpl string, files []string) (*Blog, error) {
 
 	for _, file := range files {
 		url := cleanURL(filepath.Base(file))
+		dateStr, err := fileNameDate(file)
+		if err != nil {
+			return nil, err
+		}
+		i, err := strconv.ParseInt(dateStr, 10, 64)
+		if err != nil {
+			return nil, err
+		}
+		date := time.Unix(i, 0)
+
 		post := &Post{
 			URL:  url,
 			Path: file,
+			Date: date,
 			tmpl: tmpl,
 		}
 
@@ -91,9 +108,16 @@ func (p *Post) String() string {
 	return buf.String()
 }
 
+func fileNameDate(name string) (string, error) {
+	match := datePrefixRe.FindStringSubmatch(name)
+	if len(match) != 2 {
+		return "", errors.New("invalid date in file name")
+	}
+	return match[1], nil
+}
+
 func cleanURL(name string) string {
-	re := regexp.MustCompile("^[0-9]+-")
 	base := strings.TrimLeft(
 		strings.TrimRight(strings.TrimRight(name, ".html"), ".md"), "/")
-	return re.ReplaceAllString(base, "")
+	return datePrefixRe.ReplaceAllString(base, "")
 }
