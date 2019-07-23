@@ -16,7 +16,8 @@ import (
 	blackfriday "github.com/russross/blackfriday/v2"
 )
 
-var datePrefixRe = regexp.MustCompile("([0-9]+)-")
+var fileNameDateRe = regexp.MustCompile("([0-9]+)-")
+var fileNameSlugRe = regexp.MustCompile("[0-9]+-(.+)\\.")
 
 // Blog holds all information about this blog and its posts in memory.
 type Blog struct {
@@ -27,6 +28,7 @@ type Blog struct {
 type Post struct {
 	URL     string
 	Path    string
+	Slug    string
 	Content string
 	Date    time.Time
 	tmpl    *template.Template
@@ -48,6 +50,12 @@ func ParseFiles(postTmpl string, files []string) (*Blog, error) {
 
 	for _, file := range files {
 		url := cleanURL(filepath.Base(file))
+
+		slug, err := fileNameSlug(file)
+		if err != nil {
+			return nil, err
+		}
+
 		dateStr, err := fileNameDate(file)
 		if err != nil {
 			return nil, err
@@ -61,6 +69,7 @@ func ParseFiles(postTmpl string, files []string) (*Blog, error) {
 		post := &Post{
 			URL:  url,
 			Path: file,
+			Slug: slug,
 			Date: date,
 			tmpl: tmpl,
 		}
@@ -108,8 +117,16 @@ func (p *Post) String() string {
 	return buf.String()
 }
 
+func fileNameSlug(name string) (string, error) {
+	match := fileNameSlugRe.FindStringSubmatch(name)
+	if len(match) != 2 {
+		return "", errors.New("invalid slug in file name")
+	}
+	return match[1], nil
+}
+
 func fileNameDate(name string) (string, error) {
-	match := datePrefixRe.FindStringSubmatch(name)
+	match := fileNameDateRe.FindStringSubmatch(name)
 	if len(match) != 2 {
 		return "", errors.New("invalid date in file name")
 	}
@@ -119,5 +136,5 @@ func fileNameDate(name string) (string, error) {
 func cleanURL(name string) string {
 	base := strings.TrimLeft(
 		strings.TrimRight(strings.TrimRight(name, ".html"), ".md"), "/")
-	return datePrefixRe.ReplaceAllString(base, "")
+	return fileNameDateRe.ReplaceAllString(base, "")
 }
