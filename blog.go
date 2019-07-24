@@ -22,7 +22,8 @@ import (
 var fileNameDateRe = regexp.MustCompile("([0-9]+)-")
 
 type Metadata struct {
-	Title string
+	Title    string
+	Abstract string
 }
 
 // Blog holds all information about this blog and its posts in memory.
@@ -65,7 +66,8 @@ func (blog *Blog) loadCatalog() error {
 
 	for _, entry := range records[1:] {
 		catalog[entry[0]] = &Metadata{
-			Title: entry[1],
+			Title:    entry[1],
+			Abstract: entry[2],
 		}
 	}
 
@@ -119,11 +121,11 @@ func (blog *Blog) generatePost(file string, tmpl *template.Template) (*Post, err
 	date := time.Unix(i, 0)
 
 	post := &Post{
-		URL:   url,
-		Path:  file,
-		Date:  date,
-		Title: metadata.Title,
-		tmpl:  tmpl,
+		URL:      url,
+		Path:     file,
+		Date:     date,
+		Metadata: metadata,
+		tmpl:     tmpl,
 	}
 
 	if err := post.Load(); err != nil {
@@ -140,12 +142,12 @@ func (blog *Blog) Get(file string) *Post {
 
 // Post hold information about a blog post
 type Post struct {
-	URL     string
-	Path    string
-	Title   string
-	Content string
-	Date    time.Time
-	tmpl    *template.Template
+	URL      string
+	Path     string
+	Content  string
+	Date     time.Time
+	Metadata *Metadata
+	tmpl     *template.Template
 }
 
 // Load reads a post's contents from the file system
