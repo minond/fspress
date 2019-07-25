@@ -7,6 +7,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"strings"
 
 	"github.com/minond/fspress"
 )
@@ -20,17 +21,17 @@ var (
 	blog  *fspress.Blog
 	index = template.Must(template.New("index").Parse(indexhtml))
 
-	autoreload = flag.Bool("autoreload", false, "auto reload posts on an interval. requires dev mode")
-	catalog    = flag.String("catalog", "catalog.csv", "path to catalog csv file")
-	dev        = flag.Bool("dev", false, "run blog in development mode")
-	glob       = flag.String("glob", "[0-9]*.md", "directories to check for post files")
-	listen     = flag.String("listen", ":8081", "host and port to listen on")
-	postTmpl   = flag.String("post-template", "post.tmpl", "path to post template file")
+	autoreload  = flag.Bool("autoreload", false, "auto reload posts on an interval. requires dev mode")
+	dev         = flag.Bool("dev", false, "run blog in development mode")
+	listen      = flag.String("listen", ":8081", "host and port to listen on")
+	postCatalog = flag.String("post-catalog", "catalog.csv", "path to catalog csv file")
+	postGlob    = flag.String("post-glob", "[0-9]*.md", "directories to check for post files")
+	postTmpl    = flag.String("post-template", "post.tmpl", "path to post template file")
 )
 
 func init() {
 	flag.Parse()
-	blog = fspress.New(*catalog, *postTmpl, *glob)
+	blog = fspress.New(*postCatalog, *postTmpl, *postGlob)
 	if err := blog.Load(); err != nil {
 		panic(err)
 	}
@@ -47,6 +48,12 @@ func main() {
 
 	if *dev && *autoreload {
 		extra += reloader
+	}
+
+	postsDir := ""
+	postGlobParts := strings.Split(*postGlob, "/")
+	if len(postGlobParts) != 1 {
+		postsDir = strings.Join(postGlobParts[0:len(postGlobParts)-1], "/")
 	}
 
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
@@ -81,6 +88,8 @@ func main() {
 		}
 
 		if post := blog.Get(r.URL.Path); post != nil {
+			fmt.Fprint(w, post.String()+extra)
+		} else if post := blog.Get(strings.Replace(r.URL.Path, postsDir, "", 1)); post != nil {
 			fmt.Fprint(w, post.String()+extra)
 		} else {
 			static.ServeHTTP(w, r)

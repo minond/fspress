@@ -11,15 +11,15 @@ import (
 var (
 	blog *fspress.Blog
 
-	catalog  = flag.String("catalog", "catalog.csv", "path to catalog csv file")
-	glob     = flag.String("glob", "[0-9]*.md", "directories to check for post files")
-	out      = flag.String("out", ".", "output directory")
-	postTmpl = flag.String("post-template", "post.tmpl", "path to post template file")
+	out         = flag.String("out", ".", "output directory")
+	postCatalog = flag.String("post-catalog", "catalog.csv", "path to catalog csv file")
+	postGlob    = flag.String("post-glob", "[0-9]*.md", "directories to check for post files")
+	postTmpl    = flag.String("post-template", "post.tmpl", "path to post template file")
 )
 
 func init() {
 	flag.Parse()
-	blog = fspress.New(*catalog, *postTmpl, *glob)
+	blog = fspress.New(*postCatalog, *postTmpl, *postGlob)
 	if err := blog.Load(); err != nil {
 		panic(err)
 	}
